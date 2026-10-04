@@ -1,0 +1,7 @@
+﻿구분,MAPE (%),비고
+Train (Batch 1 CV),6.6917374061584525,
+Valid (Batch 1 Hold-out),9.529958171127841,
+Test (Batch 2),31.859300382298045,
+Gap (Train-Valid),2.838220764969389,(+) : 과적합 의심
+Gap (Valid-Test),22.329342211170204,(+) : 배치간 일반화 저하 의심
+Gap (Target-Test),22.759300382298044,Target : 원논문 9.1%

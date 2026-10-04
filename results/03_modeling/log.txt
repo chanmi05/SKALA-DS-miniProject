@@ -1,0 +1,99 @@
+
+==============================================================================
+1. 데이터 분할
+==============================================================================
+피처 세트 : {'variance': 1, 'discharge': 13, 'full': 20, 'full+policy': 24, 'selected': 7}
+Selected : ['dq_log_var', 'dq_skew', 'dq_kurt', 'qd_slope_91_100', 'tmax_2_100', 'Q1', 'C2']
+
+[분할 요약]
+                     cells  policies  life_min  life_median  life_max
+Train (B1)              29        16       599          788      1709
+Valid (B1 hold-out)     12         6       534        859.5      2237
+Test (B2)               39         9       392          472      1186
+Valid 정책 : ['3.6C(80%)-3.6C', '5.4C(60%)-3.6C', '5.4C(80%)-5.4C', '6C(30%)-3.6C', '6C(50%)-3.6C', '6C(60%)-3C']
+정책 겹침 (Train ∩ Valid) : set() ← 비어 있어야 정상
+
+==============================================================================
+2. 후보 모델 비교
+==============================================================================
+
+[모델 × 피처 세트 결과 (CV 순)]
+              model      feature_set  n_feats  cv_mape  valid_mape  gap_train_valid  B2_mape                                                        params
+10       ElasticNet        discharge       13     6.69        9.53             2.84    29.41              {"alpha": 0.005298316906283713, "l1_ratio": 0.5}
+11       ElasticNet             full       20     9.57        9.28            -0.29    41.20               {"alpha": 0.01743328822199989, "l1_ratio": 1.0}
+9        ElasticNet         variance        1    10.10        8.72            -1.38    27.63               {"alpha": 0.02592943797404667, "l1_ratio": 0.1}
+0   Linear (1 feat)         variance        1    10.17        8.70            -1.48    26.29                                                            {}
+12       ElasticNet  selected-noQ1C2        5    10.62        9.31            -1.31    29.90              {"alpha": 0.011721022975334805, "l1_ratio": 1.0}
+3        ElasticNet         selected        7    11.07       10.24            -0.83    30.97               {"alpha": 0.01743328822199989, "l1_ratio": 0.9}
+2             Lasso         selected        7    11.14       10.59            -0.55    31.41                                {"alpha": 0.01743328822199989}
+7      RandomForest         selected        7    12.20       21.94             9.74    41.30  {"max_depth": 3, "min_samples_leaf": 5, "n_estimators": 500}
+1             Ridge         selected        7    13.69       11.20            -2.49    37.60                                              {"alpha": 0.001}
+4               PLS         selected        7    13.70       11.20            -2.50    37.24                                           {"n_components": 5}
+5               SVR         selected        7    14.56       13.77            -0.79    39.44                     {"C": 10, "epsilon": 0.05, "gamma": 0.01}
+8           XGBoost         selected        7    15.67       15.89             0.22    39.62   {"learning_rate": 0.1, "max_depth": 2, "n_estimators": 200}
+6               GPR         selected        7    16.98       24.51             7.53    55.51                                                            {}
+
+==============================================================================
+3. 최종 모델 선택
+==============================================================================
+규칙 ② 과적합 제외 (Valid − CV > 5.0%p) : [['GPR', 'selected', 7.53], ['RandomForest', 'selected', 9.74]]
+규칙 ① CV 최소 = 6.69% → 규칙 ③ 1.0%p 이내 후보 : [['ElasticNet', 'discharge', 6.69]]
+
+▶ 최종 모델 : ElasticNet / 피처 세트 discharge (13개) / 하이퍼파라미터 {"alpha": 0.005298316906283713, "l1_ratio": 0.5}
+
+[최종 모델 계수]
+                 coef (표준화 피처 기준)
+dq_log_var                 -0.144
+dq_kurt                   0.01803
+qd_max_minus_2           -0.01761
+qd_100                    0.01011
+qd_2                     0.008354
+qd_int_91_100            0.002951
+dq_skew                        -0
+dq_log_absmin                  -0
+dq_mean                         0
+qd_slope_91_100                -0
+qd_int_2_100                    0
+qd_slope_2_100                  0
+dq_2V                          -0
+
+==============================================================================
+4. 성능 리포트
+==============================================================================
+
+[Reporting format — ElasticNet (discharge)]
+                          MAPE (%)                   비고
+구분                                                     
+Train (Batch 1 CV)            6.69                     
+Valid (Batch 1 Hold-out)      9.53                     
+Test (Batch 2)               31.86                     
+Gap (Train-Valid)             2.84         (+) : 과적합 의심
+Gap (Valid-Test)             22.33  (+) : 배치간 일반화 저하 의심
+Gap (Target-Test)            22.76    Target : 원논문 9.1%
+RMSE (cycles) : {'B2': 228.8}
+
+==============================================================================
+5. 오류 분석
+==============================================================================
+
+[그룹별 오차 (mean_signed_err > 0 : 과대예측)]
+                  n  MAPE  mean_signed_err  over_pred_ratio
+batch structure                                            
+B2    new         9 39.53            39.53             1.00
+      old        30 29.56            29.56             1.00
+B2 학습 범위 안(≥534) 9셀 MAPE 39.5% | 범위 밖 30셀 MAPE 29.6%
+
+[B2에서 오차가 가장 큰 8셀]
+      structure                       policy  true   pred  pct_err
+cell                                                              
+b2c9        new  5.6C(26%)-4.5C-newstructure 791.0 1460.3     84.6
+b2c44       new    5.2C(58%)-4C-newstructure 841.0 1505.7     79.0
+b2c31       old               5.6C(26%)-4.5C 425.0  632.9     48.9
+b2c6        old                  3.6C(9%)-5C 393.0  575.6     46.5
+b2c13       old                4.65C(69%)-6C 460.0  648.7     41.0
+b2c21       old                   6C(60%)-3C 408.0  572.6     40.3
+b2c45       new  5.6C(26%)-4.5C-newstructure 997.0 1390.8     39.5
+b2c46       old               4.8C(80%)-4.8C 503.0  699.9     39.2
+  RandomForest : B2 예측 최솟값    628 (B2 실제 최솟값 392, B1 최솟값 534) · B2 short(<500) 셀 MAPE 44.1%
+  XGBoost      : B2 예측 최솟값    528 (B2 실제 최솟값 392, B1 최솟값 534) · B2 short(<500) 셀 MAPE 36.8%
+  ElasticNet   : B2 예측 최솟값    491 (B2 실제 최솟값 392, B1 최솟값 534) · B2 short(<500) 셀 MAPE 33.8%

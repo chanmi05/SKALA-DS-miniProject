@@ -1,0 +1,84 @@
+{
+  "dq_pair": [
+    100,
+    10
+  ],
+  "target": "log_life",
+  "sets": {
+    "variance": [
+      "dq_log_var"
+    ],
+    "discharge": [
+      "dq_log_absmin",
+      "dq_mean",
+      "dq_log_var",
+      "dq_skew",
+      "dq_kurt",
+      "dq_2V",
+      "qd_slope_2_100",
+      "qd_int_2_100",
+      "qd_slope_91_100",
+      "qd_int_91_100",
+      "qd_2",
+      "qd_max_minus_2",
+      "qd_100"
+    ],
+    "full": [
+      "dq_log_absmin",
+      "dq_mean",
+      "dq_log_var",
+      "dq_skew",
+      "dq_kurt",
+      "dq_2V",
+      "qd_slope_2_100",
+      "qd_int_2_100",
+      "qd_slope_91_100",
+      "qd_int_91_100",
+      "qd_2",
+      "qd_max_minus_2",
+      "qd_100",
+      "chargetime_5",
+      "tmax_2_100",
+      "tmin_2_100",
+      "tavg_2_100",
+      "ir_2",
+      "ir_min_2_100",
+      "ir_100_minus_2"
+    ],
+    "full+policy": [
+      "dq_log_absmin",
+      "dq_mean",
+      "dq_log_var",
+      "dq_skew",
+      "dq_kurt",
+      "dq_2V",
+      "qd_slope_2_100",
+      "qd_int_2_100",
+      "qd_slope_91_100",
+      "qd_int_91_100",
+      "qd_2",
+      "qd_max_minus_2",
+      "qd_100",
+      "chargetime_5",
+      "tmax_2_100",
+      "tmin_2_100",
+      "tavg_2_100",
+      "ir_2",
+      "ir_min_2_100",
+      "ir_100_minus_2",
+      "C1",
+      "Q1",
+      "C2",
+      "avgC"
+    ],
+    "selected": [
+      "dq_log_var",
+      "dq_skew",
+      "dq_kurt",
+      "qd_slope_91_100",
+      "tmax_2_100",
+      "Q1",
+      "C2"
+    ]
+  }
+}
